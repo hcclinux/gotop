@@ -174,5 +174,3 @@ func (c *CSVFeed) convert(vals map[interface{}]interface{}) (map[string]interfac
 	}
 	return data
 }
-
-

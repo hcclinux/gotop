@@ -1,21 +1,21 @@
 package feeds
 
 const (
-	// Minute 分钟类型时间帧
+	// Minute type time frame.
 	Minute = iota + 1
-	// Hour 小时时间帧
+	// Hour type time frame.
 	Hour
-	// Day 日类型时间帧
+	// Day type time frame.
 	Day
-	// Week 星期类型时间帧
+	// Week type time frame.
 	Week
-	// Month 月份类型时间帧
+	// Month type time frame.
 	Month
-	// Year 年份类型时间帧
+	// Year type time frame.
 	Year
 )
 
-// Feeds .
-type Feeds struct {
+// Feeds is an abstract read k-line data interface.
+type Feeds interface {
 	
 }
