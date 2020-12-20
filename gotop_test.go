@@ -1,4 +1,4 @@
-package main
+package gotop
 
 import (
     "fmt"
@@ -8,7 +8,7 @@ import (
     "github.com/nntaoli-project/goex/builder"
 )
 
-func main() {
+func TestGoex() {
     apiBuilder := builder.NewAPIBuilder().HttpTimeout(5 * time.Second).HttpProxy("socks5://127.0.0.1:1080")
 	api := apiBuilder.APIKey("").APISecretkey("").Build(goex.BINANCE)
 	t,_ := time.Parse("2006-01-02 15:04:05", "2018-04-11 00:00:00")
