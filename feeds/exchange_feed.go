@@ -10,36 +10,32 @@ import (
 	"github.com/nntaoli-project/goex/builder"
 )
 
-/*
-ExchangeFeed 处理交易所数据
-Compression: 压缩比，例如TimeFrame=Minutes,那么Compression=5表示数据是5分钟k线数据。
-TimeFrame: 时间帧类型，Minutes、Days等类型
-FromDate: 起始时期
-ToDate: 结束日期
-Symbol: 交易对
-APIKey: 密钥
-SecretKey: 密钥
-Proxy: 代理 "socks5://127.0.0.1:1080"
-*/
+
+// ExchangeFeed ...
 type ExchangeFeed struct {
-	Compression		uint8
-	TimeFrame		uint8
-	FromDate		time.Time
-	ToDate			time.Time
-	Symbol			goex.CurrencyPair
-	APIKey			string
-	SecretKey		string
-	Proxy			string
-	DropNew 		bool
+	// For example, timeFrame = minutes, then compression = 5 means that the data is 5-minute bar data
+	compression		uint8
+	// T ime frame type, Minutes, Days
+	timeFrame		uint8
+	// Start time
+	from			time.Time
+	// End time
+	to				time.Time
+	// Currency pair
+	symbol			goex.CurrencyPair
+	apiKey			string
+	secretKey		string
+	// For example: "socks5://127.0.0.1:1080"
+	proxy			string
+	// Previous bar
+	dropNew 		bool
 }
 
-// New 初始化一些跟交易所的对接准备，然后返回Kline
-// exName 交易所名字
-// bName broker name
-func (ex *ExchangeFeed) New(exName, bName string) (brokers.CCBroker, error) {
-	broker := brokers.CCBroker{Name: bName, CurrencyPair: ex.Symbol, DropNew: ex.DropNew}
-	apiBuilder := builder.NewAPIBuilder().HttpTimeout(30 * time.Second).HttpProxy(ex.Proxy)
-	api := apiBuilder.APIKey(ex.APIKey).APISecretkey(ex.SecretKey).Build(exName)
+// NewExchangeFeed 初始化一些跟交易所的对接准备，然后返回Kline
+func (ex *ExchangeFeed) NewExchangeFeed(exName, bName string) (brokers.CCBroker, error) {
+	broker := brokers.CCBroker{Name: bName, CurrencyPair: ex.symbol, DropNew: ex.dropNew}
+	apiBuilder := builder.NewAPIBuilder().HttpTimeout(30 * time.Second).HttpProxy(ex.proxy)
+	api := apiBuilder.APIKey(ex.apiKey).APISecretkey(ex.secretKey).Build(exName)
 	broker.SetExchange(api)
 	broker.KLinePeriod = ex.getPeriod()
 	timePeriod := ex.handlePeriodTime(ex.getPeriod())
@@ -99,7 +95,7 @@ func (ex *ExchangeFeed) handleKline(api goex.API) (*utils.KLine, error) {
 	period := ex.getPeriod()
 	lastTime := ex.handleTime()
 	for {
-		respData, err := api.GetKlineRecords(ex.Symbol, period, 1000, int(lastTime.Unix()*1000))
+		respData, err := api.GetKlineRecords(ex.symbol, period, 1000, int(lastTime.Unix()*1000))
 		if err != nil {
 			return &utils.KLine{}, err
 		}
@@ -129,17 +125,17 @@ func (ex ExchangeFeed) handleTime() time.Time {
 	now := time.Now()
 	timestamp := now.Unix() - int64(now.Second()) - int64((60 * now.Minute()))
 	timestamp -= (3600 * 1000)
-	if !ex.FromDate.IsZero() && ex.ToDate.IsZero() {
-		return ex.FromDate
+	if !ex.from.IsZero() && ex.to.IsZero() {
+		return ex.from
 	}
 	return time.Unix(timestamp, 0)
 }
 
 
 func (ex ExchangeFeed) getPeriod() int {
-	switch ex.TimeFrame {
+	switch ex.timeFrame {
 	case Minute:
-		switch ex.Compression {
+		switch ex.compression {
 		case 1:
 			return goex.KLINE_PERIOD_1MIN
 		case 3:
@@ -154,7 +150,7 @@ func (ex ExchangeFeed) getPeriod() int {
 			return goex.KLINE_PERIOD_60MIN
 		}
 	case Hour:
-		switch ex.Compression {
+		switch ex.compression {
 		case 1:
 			return goex.KLINE_PERIOD_1H
 		case 2:
@@ -169,7 +165,7 @@ func (ex ExchangeFeed) getPeriod() int {
 			return goex.KLINE_PERIOD_12H
 		}
 	case Day:
-		switch ex.Compression {
+		switch ex.compression {
 		case 1:
 			return goex.KLINE_PERIOD_1DAY
 		case 3:
