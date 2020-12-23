@@ -1,4 +1,4 @@
-package feeds
+package exchange
 
 const (
 	// Minute type time frame.
@@ -15,7 +15,7 @@ const (
 	Year
 )
 
-// Feeds is an abstract read k-line data interface.
-type Feeds interface {
+// Exchange is an abstract read k-line data interface.
+type Exchange interface {
 	
 }
