@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"gotop/utils"
-	"gotop/brokers"
 	goframe "github.com/rocketlaunchr/dataframe-go"
 	"github.com/rocketlaunchr/dataframe-go/imports"
 )
@@ -35,33 +34,22 @@ type CSVFeed struct {
 
 
 
-/* 
-New 读取csv文件,把数据处理好后返回给cerebro使用
-path: 文件路径
-*/
-func (c *CSVFeed) New(path, name string) (brokers.DBroker, error) {
-	var err error
-	broker := brokers.DBroker{Name: name}
-	broker.Init()
+
+// NewCSV data from csv file
+func (c *CSVFeed) NewCSV(path string) (error) {
 	file, err := os.Open(path)
 	if err != nil {
-  		return brokers.DBroker{}, err
+  		return err
 	}
 	defer file.Close()
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(file)
 	s := buf.String()
-	ctx := context.TODO()
-	df, err := imports.LoadFromCSV(ctx, strings.NewReader(s))
+	df, err := imports.LoadFromCSV(context.TODO(), strings.NewReader(s))
 	if err != nil {
-		return brokers.DBroker{}, err
+		return err
 	}
-	kline, err := c.handleDF(df)
-	if err != nil {
-		return brokers.DBroker{}, err
-	}
-	broker.SetKLine(kline)
-	return broker, nil
+	return nil
 }
 
 func (c *CSVFeed) isDiscard(k *utils.KLine) {
