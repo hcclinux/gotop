@@ -1,24 +1,6 @@
 package strategy
 
-import (
-	"gotop/utils"
-	"gotop/brokers"
-)
-// Strategy 策略基础接口
+// Strategy is base interface.
 type Strategy interface {
-	Next()
-	Init()
-	Set(utils.Candle)
-	AddBroker(brokers.Broker)
+	Run()
 }
-
-const (
-	// TOP .
-	TOP = "top" 
-	// BOTTOM .
-	BOTTOM = "bottom"
-	// UP .
-	UP = "up"
-	// DOWN .
-	DOWN = "down"
-)

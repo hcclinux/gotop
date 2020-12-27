@@ -1,4 +1,4 @@
-package bar
+package bars
 
 const (
 	// Minute type time frame.
@@ -14,3 +14,8 @@ const (
 	// Year type time frame.
 	Year
 )
+
+// Bars ...
+type Bars struct {
+	
+}

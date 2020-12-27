@@ -2,12 +2,10 @@ package gotop
 
 
 import (
-	"reflect"
 	"encoding/json"
 	"os"
 	"fmt"
 
-	"gotop/utils"
 	"gotop/brokers"
 	"gotop/strategy"
 )
@@ -59,16 +57,5 @@ func (c *Cerebro) AddStrategy(s strategy.Strategy) {
 
 // Run 启动运行回测
 func (c *Cerebro) Run() {
-	c.strategy.Init()
-	c.strategy.AddBroker(c.Broker)
-	for {
-		candle := c.Broker.Next()
-		if reflect.DeepEqual(candle, utils.Candle{}) {
-			break
-		}
-		c.strategy.Set(candle)
-		c.strategy.Next()
-		c.Broker.SetIndex()
-	}
-	c.Broker.Print()
+
 }
