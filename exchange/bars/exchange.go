@@ -3,19 +3,16 @@ package bars
 import (
 	"time"
 
-	"gotop/brokers"
-	"gotop/utils"
-
 	"github.com/nntaoli-project/goex"
 	"github.com/nntaoli-project/goex/builder"
 )
 
 
-// ExchangeFeed ...
-type ExchangeFeed struct {
+// ExchangeBars ...
+type ExchangeBars struct {
 	// For example, timeFrame = minutes, then compression = 5 means that the data is 5-minute bar data
 	compression		uint8
-	// T ime frame type, Minutes, Days
+	// Time frame type, Minutes, Days
 	timeFrame		uint8
 	// Start time
 	from			time.Time
@@ -31,24 +28,15 @@ type ExchangeFeed struct {
 	dropNew 		bool
 }
 
-// NewExchangeFeed 初始化一些跟交易所的对接准备，然后返回Kline
-func (ex *ExchangeFeed) NewExchangeFeed(exName, bName string) (brokers.CCBroker, error) {
-	broker := brokers.CCBroker{Name: bName, CurrencyPair: ex.symbol, DropNew: ex.dropNew}
+// NewExchangeBars init exchange interface.
+func NewExchangeBars(exName, bName string) error {
 	apiBuilder := builder.NewAPIBuilder().HttpTimeout(30 * time.Second).HttpProxy(ex.proxy)
 	api := apiBuilder.APIKey(ex.apiKey).APISecretkey(ex.secretKey).Build(exName)
-	broker.SetExchange(api)
-	broker.KLinePeriod = ex.getPeriod()
-	timePeriod := ex.handlePeriodTime(ex.getPeriod())
-	broker.SetTimePeriod(timePeriod)
-	kline, err := ex.handleKline(api)
-	if err != nil {
-		return broker, nil
-	}
-	broker.SetKLine(kline)
-	return broker, nil
+
+	return nil
 }
 
-func (ex ExchangeFeed) handlePeriodTime(period int) int {
+func (ex ExchangeBars) handlePeriodTime(period int) int {
 	switch period {
 	case goex.KLINE_PERIOD_1MIN:
 		return 1
@@ -90,7 +78,7 @@ func (ex ExchangeFeed) handlePeriodTime(period int) int {
 
 
 // HandleKline 处理K线数据
-func (ex *ExchangeFeed) handleKline(api goex.API) (*utils.KLine, error) {
+func (ex *ExchangeBars) handleKline(api goex.API) (*utils.KLine, error) {
 	var kline utils.KLine
 	period := ex.getPeriod()
 	lastTime := ex.handleTime()
@@ -121,7 +109,7 @@ func (ex *ExchangeFeed) handleKline(api goex.API) (*utils.KLine, error) {
 	return &kline, nil
 }
 
-func (ex ExchangeFeed) handleTime() time.Time {
+func (ex ExchangeBars) handleTime() time.Time {
 	now := time.Now()
 	timestamp := now.Unix() - int64(now.Second()) - int64((60 * now.Minute()))
 	timestamp -= (3600 * 1000)
@@ -132,7 +120,7 @@ func (ex ExchangeFeed) handleTime() time.Time {
 }
 
 
-func (ex ExchangeFeed) getPeriod() int {
+func (ex ExchangeBars) getPeriod() int {
 	switch ex.timeFrame {
 	case Minute:
 		switch ex.compression {

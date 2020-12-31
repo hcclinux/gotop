@@ -42,14 +42,14 @@ const (
 
 // Order 订单详情
 type Order struct {
-	Symbol				string
+	Symbol				string				`json:"symbol"`
 	DateTime 			time.Time   		`json:"time"`
-	OrderID 			string
+	OrderID 			string				`json:"order_id"`
 	ExecPrice			float64				`json:"price"`
-	Type 				string
-	Quantity 			float64
-	Comm				float64	
-	Side 				string				`json:"type"`
-	PositionSide 		string
-	status 				int
+	Type 				string				`json:"type"`
+	Quantity 			float64				`json:"quantity"`	
+	Comm				float64				`json:"comm"`
+	Side 				string				`json:"side"`
+	PositionSide 		string				`json:"position_side"`
+	Status 				int					`json:"status"`
 }
