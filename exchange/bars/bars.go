@@ -16,6 +16,20 @@ const (
 )
 
 // Bars ...
-type Bars struct {
-	
+type Bars interface {
+	Init(... Option) error
+	Options() Options
 }
+
+// Bar ohlcv data
+type Bar struct {
+	Open 		float64
+	High 		float64
+	Low 		float64
+	Close 		float64
+	Volume 		float64
+	Timestamp	int64
+}
+
+// Option used by the Bars
+type Option func(*Options)

@@ -10,33 +10,23 @@ import (
 
 // ExchangeBars ...
 type ExchangeBars struct {
-	// For example, timeFrame = minutes, then compression = 5 means that the data is 5-minute bar data
-	compression		uint8
-	// Time frame type, Minutes, Days
-	timeFrame		uint8
-	// Start time
-	from			time.Time
-	// End time
-	to				time.Time
-	// Currency pair
-	symbol			goex.CurrencyPair
-	apiKey			string
-	secretKey		string
-	// For example: "socks5://127.0.0.1:1080"
-	proxy			string
-	// Previous bar
-	dropNew 		bool
+	opts 	Options
+	api 	*builder.APIBuilder
 }
 
 // NewExchangeBars init exchange interface.
-func NewExchangeBars(exName, bName string) error {
-	apiBuilder := builder.NewAPIBuilder().HttpTimeout(30 * time.Second).HttpProxy(ex.proxy)
-	api := apiBuilder.APIKey(ex.apiKey).APISecretkey(ex.secretKey).Build(exName)
+func NewExchangeBars(opt ...Option) *ExchangeBars {
+	opts := NewOptions(opt...)
+	api := builder.NewAPIBuilder().HttpTimeout(10 * time.Second).HttpProxy(opts.Proxy)
+	// api := apiBuilder.APIKey(ex.apiKey).APISecretkey(ex.secretKey).Build(exName)
 
-	return nil
+	return &ExchangeBars{
+		opts: opts,
+		api: api,
+	}
 }
 
-func (ex ExchangeBars) handlePeriodTime(period int) int {
+func (ex *ExchangeBars) handlePeriodTime(period int) int {
 	switch period {
 	case goex.KLINE_PERIOD_1MIN:
 		return 1
@@ -78,52 +68,52 @@ func (ex ExchangeBars) handlePeriodTime(period int) int {
 
 
 // HandleKline 处理K线数据
-func (ex *ExchangeBars) handleKline(api goex.API) (*utils.KLine, error) {
-	var kline utils.KLine
+func (ex *ExchangeBars) handleKline(api goex.API) ([]*Bar, error) {
+	kline := make([]*Bar, 0)
 	period := ex.getPeriod()
 	lastTime := ex.handleTime()
 	for {
-		respData, err := api.GetKlineRecords(ex.symbol, period, 1000, int(lastTime.Unix()*1000))
+		resp, err := api.GetKlineRecords(ex.opts.Symbol, period, 1000, int(lastTime.Unix()*1000))
 		if err != nil {
-			return &utils.KLine{}, err
+			return kline, err
 		}
-		if len(respData) == 0 {
+		if len(resp) == 0 {
 			break
 		}
-		if lastTime.Equal(time.Unix(respData[len(respData)-1].Timestamp, 0)) {
+		if lastTime.Equal(time.Unix(resp[len(resp)-1].Timestamp, 0)) {
 			break
 		}
-		lastTime = time.Unix(respData[len(respData)-1].Timestamp, 0)
-		for _, k := range respData {
-			c := utils.Candle{
-				Date: time.Unix(k.Timestamp, 0),
+		lastTime = time.Unix(resp[len(resp)-1].Timestamp, 0)
+		for _, k := range resp {
+			b := &Bar{
+				Timestamp: k.Timestamp,
 				Open: k.Open,
 				Close: k.Close,
 				High: k.High,
 				Low: k.Low,
 				Volume: k.Vol,
 			}
-			kline.OHLC = append(kline.OHLC, c)
+			kline = append(kline, b)
 		}
 	}
-	return &kline, nil
+	return kline, nil
 }
 
-func (ex ExchangeBars) handleTime() time.Time {
+func (ex *ExchangeBars) handleTime() time.Time {
 	now := time.Now()
 	timestamp := now.Unix() - int64(now.Second()) - int64((60 * now.Minute()))
 	timestamp -= (3600 * 1000)
-	if !ex.from.IsZero() && ex.to.IsZero() {
-		return ex.from
+	if !ex.opts.From.IsZero() && ex.opts.To.IsZero() {
+		return ex.opts.From
 	}
 	return time.Unix(timestamp, 0)
 }
 
 
-func (ex ExchangeBars) getPeriod() int {
-	switch ex.timeFrame {
+func (ex *ExchangeBars) getPeriod() int {
+	switch ex.opts.TimeFrame {
 	case Minute:
-		switch ex.compression {
+		switch ex.opts.Compression {
 		case 1:
 			return goex.KLINE_PERIOD_1MIN
 		case 3:
@@ -138,7 +128,7 @@ func (ex ExchangeBars) getPeriod() int {
 			return goex.KLINE_PERIOD_60MIN
 		}
 	case Hour:
-		switch ex.compression {
+		switch ex.opts.Compression {
 		case 1:
 			return goex.KLINE_PERIOD_1H
 		case 2:
@@ -153,7 +143,7 @@ func (ex ExchangeBars) getPeriod() int {
 			return goex.KLINE_PERIOD_12H
 		}
 	case Day:
-		switch ex.compression {
+		switch ex.opts.Compression {
 		case 1:
 			return goex.KLINE_PERIOD_1DAY
 		case 3:
