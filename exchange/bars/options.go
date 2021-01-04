@@ -24,10 +24,15 @@ type Options struct {
 	// Previous bar
 	DropNew 		bool
 	Path 			string
+	ExchangeName 	string
 }
+
+// Option used by the Bars
+type Option func(*Options)
 
 // NewOptions ...
 func NewOptions(options ...Option) Options {
+	// Default options
 	opts := Options{
 		Compression: 5,
 		TimeFrame: Minute,
@@ -36,7 +41,8 @@ func NewOptions(options ...Option) Options {
 		Symbol: goex.BTC_USDT,
 		Proxy: "socks5://127.0.0.1:1080",
 		DropNew: true,
-		Path: "./bars.csv",
+		Path: "./btc.csv",
+		ExchangeName: goex.BINANCE,
 	}
 
 	for _, o := range options {
@@ -44,4 +50,60 @@ func NewOptions(options ...Option) Options {
 	}
 
 	return opts
+}
+
+// WithCompression .
+func WithCompression(c uint8) Option {
+	return func(o *Options) {
+		o.Compression = c
+	}
+}
+
+// WithTimeFrame .
+func WithTimeFrame(tf uint8) Option {
+	return func(o *Options) {
+		o.TimeFrame = tf
+	}
+}
+
+// WithFrom .
+func WithFrom(t time.Time) Option {
+	return func(o *Options) {
+		o.From = t
+	}
+}
+
+// WithTo .
+func WithTo(t time.Time) Option {
+	return func(o *Options) {
+		o.To = t
+	}
+}
+
+// WithSymbol .
+func WithSymbol(s goex.CurrencyPair) Option {
+	return func(o *Options) {
+		o.Symbol = s
+	}
+}
+
+// WithProxy .
+func WithProxy(s string) Option {
+	return func(o *Options) {
+		o.Proxy = s
+	}
+}
+
+// WithPath .
+func WithPath(s string) Option {
+	return func(o *Options) {
+		o.Path = s
+	}
+}
+
+// WithName .
+func WithName(name string) Option {
+	return func(o *Options) {
+		o.ExchangeName = name
+	}
 }

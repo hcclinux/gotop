@@ -2,15 +2,12 @@ package bars
 
 import (
 	"os"
-	"fmt"
 	"time"
 	"bytes"
 	"context"
 	"strings"
 	"strconv"
-
-	"gotop/utils"
-	"gotop/brokers"
+	
 	goframe "github.com/rocketlaunchr/dataframe-go"
 	"github.com/rocketlaunchr/dataframe-go/imports"
 )
@@ -19,133 +16,133 @@ import (
 
 
 /*
-CSVFeed 用于读取csv文件后转换为可操作数据
+CSVBars 用于读取csv文件后转换为可操作数据
 Compression: 压缩比，例如TimeFrame=Minutes,那么Compression=5表示数据是5分钟k线数据。
 TimeFrame: 时间帧类型，Minutes、Days等类型
 FromDate: 起始时期
 ToDate: 结束日期
 Format("2006-01-02 15:04:05")
 */
-type CSVFeed struct {
-	Compression		uint8
-	TimeFrame		uint8
-	FromDate		time.Time
-	ToDate			time.Time
+type CSVBars struct {
+	opts 	Options
+	k 		[]*Bar
 }
 
 
 
 /* 
-New 读取csv文件,把数据处理好后返回给cerebro使用
+NewCSV 读取csv文件,把数据处理好后返回给cerebro使用
 path: 文件路径
 */
-func (c *CSVFeed) New(path, name string) (brokers.DBroker, error) {
-	var err error
-	broker := brokers.DBroker{Name: name}
-	broker.Init()
-	file, err := os.Open(path)
-	if err != nil {
-  		return brokers.DBroker{}, err
+func NewCSV(opt ...Option) *CSVBars {
+	return &CSVBars{
+
+	}
+}
+
+// Init .
+func (cb *CSVBars) Init(opts ...Option) (err error) {
+	var (
+		file *os.File
+		df *goframe.DataFrame
+	)
+
+	for _, o := range opts {
+		o(&cb.opts)
+	}
+
+	if file, err = os.Open(cb.opts.Path); err != nil {
+		return
 	}
 	defer file.Close()
+
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(file)
-	s := buf.String()
-	ctx := context.TODO()
-	df, err := imports.LoadFromCSV(ctx, strings.NewReader(s))
-	if err != nil {
-		return brokers.DBroker{}, err
+	if df, err = imports.LoadFromCSV(context.TODO(), strings.NewReader(buf.String())); err != nil {
+		return
 	}
-	kline, err := c.handleDF(df)
-	if err != nil {
-		return brokers.DBroker{}, err
+	cb.k = make([]*Bar, 0)
+	if err = cb.handleDataFrame(df); err != nil {
+		return
 	}
-	broker.SetKLine(kline)
-	return broker, nil
+	return nil
 }
 
-func (c *CSVFeed) isDiscard(k *utils.KLine) {
+func (cb *CSVBars) isDiscard() {
 	var begin, end int
-	if c.FromDate.IsZero() && c.ToDate.IsZero() {
+	if cb.opts.From.IsZero() && cb.opts.To.IsZero() {
 		return
-	} else if !c.FromDate.IsZero() && c.ToDate.IsZero() {
-		for i, j := range k.OHLC {
-			if c.FromDate.Equal(j.Date) {
+	} else if !cb.opts.From.IsZero() && cb.opts.To.IsZero() {
+		for i, j := range cb.k {
+			if cb.opts.From.Equal(time.Unix(j.Timestamp, 0)) {
 				begin = i
 				break
 			}
 		}
-		k.OHLC = k.OHLC[begin:]
+		cb.k = cb.k[begin:]
 		return
-	} else if c.FromDate.IsZero() && !c.ToDate.IsZero() {
-		for i, j := range k.OHLC {
-			if c.ToDate.Equal(j.Date) {
+	} else if cb.opts.From.IsZero() && !cb.opts.To.IsZero() {
+		for i, j := range cb.k {
+			if cb.opts.To.Equal(time.Unix(j.Timestamp, 0)) {
 				end = i
 				break
 			}
 		}
-		k.OHLC = k.OHLC[:end+1]
+		cb.k = cb.k[:end+1]
 		return
-	} else if !c.FromDate.IsZero() && !c.ToDate.IsZero() {
-		for i, j := range k.OHLC {
-			if c.FromDate.Equal(j.Date) {
+	} else if !cb.opts.From.IsZero() && !cb.opts.To.IsZero() {
+		for i, j := range cb.k {
+			if cb.opts.From.Equal(time.Unix(j.Timestamp, 0)) {
 				begin = i
 			}
-			if c.ToDate.Equal(j.Date) {
+			if cb.opts.To.Equal(time.Unix(j.Timestamp, 0)) {
 				end = i
 				break
 			}
 		}
-		k.OHLC = k.OHLC[begin:end+1]
+		cb.k = cb.k[begin:end+1]
 		return
 	}
 }
 
-/*
-HandleDF 处理读取到csv数据
-*/
-func (c *CSVFeed) handleDF(df *goframe.DataFrame) (*utils.KLine, error) {
+func (cb *CSVBars) handleDataFrame(df *goframe.DataFrame) error {
 	iterator := df.ValuesIterator(
 		goframe.ValuesOptions{
 		InitialRow:0,
 		Step:1,
 		DontReadLock:true},
 	)
-	var kline utils.KLine
-	df.Lock()
+
 	for {
 		row, vals, _ := iterator()
  		if row == nil {
   			break
 		}
-		data := c.convert(vals)
-		ca, err := c.handleCandle(data)
+		data := cb.convert(vals)
+		bar, err := cb.handleBar(data)
 		if err != nil {
-			return &kline, err
+			return err
 		}
-		kline.Append(ca)
+		cb.k = append(cb.k, &bar)
 	}
-	df.Unlock()
-	c.isDiscard(&kline)
-	return &kline, nil
+	cb.isDiscard()
+	return nil
 }
 
 
-func (c *CSVFeed) handleCandle(cdata map[string]interface{}) (utils.Candle, error) {
+func (cb *CSVBars) handleBar(cdata map[string]interface{}) (bar Bar, err error) {
 	var date time.Time
-	var err error
-	switch c.TimeFrame {
+	switch cb.opts.TimeFrame {
 	case Minute:
 		date, err = time.Parse("2006-01-02 15:04:05", cdata["date"].(string))
 	default:
 		date, err = time.Parse("2006-01-02", cdata["date"].(string))
 	}
 	if err != nil {
-		fmt.Println("Date conversion failed")
-		return utils.Candle{}, err
+		return Bar{}, err
 	}
-	data := utils.Candle{
-		Date: date,
+	data := Bar{
+		Timestamp: date.Unix(),
 		Open: cdata["open"].(float64),
 		High: cdata["high"].(float64),
 		Low: cdata["low"].(float64),
@@ -156,7 +153,7 @@ func (c *CSVFeed) handleCandle(cdata map[string]interface{}) (utils.Candle, erro
 }
 
 
-func (c *CSVFeed) convert(vals map[interface{}]interface{}) (map[string]interface{}) {
+func (cb *CSVBars) convert(vals map[interface{}]interface{}) (map[string]interface{}) {
 	data := map[string]interface{}{}
 	for key, val := range vals {
 		switch key := key.(type) {
