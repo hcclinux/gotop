@@ -30,18 +30,15 @@ type Options struct {
 // Option used by the Bars
 type Option func(*Options)
 
-// NewOptions ...
-func NewOptions(options ...Option) Options {
+
+func newOptions(options ...Option) Options {
 	// Default options
 	opts := Options{
 		Compression: 5,
 		TimeFrame: Minute,
 		From: time.Date(time.Now().Year(), 1, 1, 0, 0, 0, 0, time.Local),
-		To: time.Now(),
 		Symbol: goex.BTC_USDT,
-		Proxy: "socks5://127.0.0.1:1080",
 		DropNew: true,
-		Path: "./btc.csv",
 		ExchangeName: goex.BINANCE,
 	}
 

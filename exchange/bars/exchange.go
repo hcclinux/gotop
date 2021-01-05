@@ -13,11 +13,12 @@ type ExchangeBars struct {
 	opts 	Options
 	api 	*builder.APIBuilder
 	ex 		goex.API
+	k 		[]*Bar
 }
 
 // NewExchangeBars init exchange interface.
 func NewExchangeBars(opt ...Option) *ExchangeBars {
-	opts := NewOptions(opt...)
+	opts := newOptions(opt...)
 	api := builder.NewAPIBuilder().HttpTimeout(10 * time.Second)
 	// api = apiBuilder.APIKey(ex.apiKey).APISecretkey(ex.secretKey).Build(exName)
 
@@ -37,7 +38,8 @@ func (eb *ExchangeBars) Init(opts ...Option) (err error) {
 		eb.api.HttpProxy(eb.opts.Proxy)
 	}
 	eb.ex = eb.api.Build(eb.opts.ExchangeName)
-	return
+	eb.k = make([]*Bar, 0)
+	return eb.handleKline()
 }
 
 func (eb *ExchangeBars) handlePeriodTime(period int) int {
@@ -81,15 +83,13 @@ func (eb *ExchangeBars) handlePeriodTime(period int) int {
 }
 
 
-// HandleKline 处理K线数据
-func (eb *ExchangeBars) handleKline() ([]*Bar, error) {
-	kline := make([]*Bar, 0)
+func (eb *ExchangeBars) handleKline() error {
 	period := eb.getPeriod()
-	lastTime := eb.handleTime()
+	lastTime := eb.opts.From
 	for {
 		resp, err := eb.ex.GetKlineRecords(eb.opts.Symbol, period, 1000, int(lastTime.Unix()*1000))
 		if err != nil {
-			return kline, err
+			return err
 		}
 		if len(resp) == 0 {
 			break
@@ -107,13 +107,11 @@ func (eb *ExchangeBars) handleKline() ([]*Bar, error) {
 				Low: k.Low,
 				Volume: k.Vol,
 			}
-			kline = append(kline, b)
+			eb.k = append(eb.k, b)
 		}
 	}
-	return kline, nil
+	return nil
 }
-
-
 
 func (eb *ExchangeBars) handleTime() time.Time {
 	now := time.Now()
@@ -124,7 +122,6 @@ func (eb *ExchangeBars) handleTime() time.Time {
 	}
 	return time.Unix(timestamp, 0)
 }
-
 
 func (eb *ExchangeBars) getPeriod() int {
 	switch eb.opts.TimeFrame {

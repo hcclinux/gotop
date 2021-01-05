@@ -119,7 +119,7 @@ func (cb *CSVBars) handleDataFrame(df *goframe.DataFrame) error {
   			break
 		}
 		data := cb.convert(vals)
-		bar, err := cb.handleBar(data)
+		bar, err := cb.convertToBar(data)
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func (cb *CSVBars) handleDataFrame(df *goframe.DataFrame) error {
 }
 
 
-func (cb *CSVBars) handleBar(cdata map[string]interface{}) (bar Bar, err error) {
+func (cb *CSVBars) convertToBar(cdata map[string]interface{}) (bar Bar, err error) {
 	var date time.Time
 	switch cb.opts.TimeFrame {
 	case Minute:
