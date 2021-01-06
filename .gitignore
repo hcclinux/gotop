@@ -1,2 +1,18 @@
+# idea ignore
+.idea/
+*.ipr
+*.iml
+*.iws
 .vscode
 .DS_Store
+.history
+
+# temp ignore
+*.log
+*.cache
+*.diff
+*.exe
+*.exe~
+*.patch
+*.swp
+*.tmp

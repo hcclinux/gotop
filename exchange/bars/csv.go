@@ -7,36 +7,25 @@ import (
 	"context"
 	"strings"
 	"strconv"
-	
+	pkgerr "github.com/pkg/errors"
 	goframe "github.com/rocketlaunchr/dataframe-go"
 	"github.com/rocketlaunchr/dataframe-go/imports"
 )
 
 
 
-
-/*
-CSVBars 用于读取csv文件后转换为可操作数据
-Compression: 压缩比，例如TimeFrame=Minutes,那么Compression=5表示数据是5分钟k线数据。
-TimeFrame: 时间帧类型，Minutes、Days等类型
-FromDate: 起始时期
-ToDate: 结束日期
-Format("2006-01-02 15:04:05")
-*/
+// CSVBars .
 type CSVBars struct {
 	opts 	Options
 	k 		[]*Bar
 }
 
 
-
-/* 
-NewCSV 读取csv文件,把数据处理好后返回给cerebro使用
-path: 文件路径
-*/
-func NewCSV(opt ...Option) *CSVBars {
+// NewCSVBars .
+func NewCSVBars(opt ...Option) *CSVBars {
+	opts := newOptions(opt...)
 	return &CSVBars{
-
+		opts: opts,
 	}
 }
 
@@ -50,7 +39,9 @@ func (cb *CSVBars) Init(opts ...Option) (err error) {
 	for _, o := range opts {
 		o(&cb.opts)
 	}
-
+	if cb.opts.Path == "" {
+		return pkgerr.New("The path field required")
+	}
 	if file, err = os.Open(cb.opts.Path); err != nil {
 		return
 	}
@@ -106,6 +97,7 @@ func (cb *CSVBars) isDiscard() {
 }
 
 func (cb *CSVBars) handleDataFrame(df *goframe.DataFrame) error {
+
 	iterator := df.ValuesIterator(
 		goframe.ValuesOptions{
 		InitialRow:0,
@@ -123,14 +115,14 @@ func (cb *CSVBars) handleDataFrame(df *goframe.DataFrame) error {
 		if err != nil {
 			return err
 		}
-		cb.k = append(cb.k, &bar)
+		cb.k = append(cb.k, bar)
 	}
 	cb.isDiscard()
 	return nil
 }
 
 
-func (cb *CSVBars) convertToBar(cdata map[string]interface{}) (bar Bar, err error) {
+func (cb *CSVBars) convertToBar(cdata map[string]interface{}) (bar *Bar, err error) {
 	var date time.Time
 	switch cb.opts.TimeFrame {
 	case Minute:
@@ -139,9 +131,9 @@ func (cb *CSVBars) convertToBar(cdata map[string]interface{}) (bar Bar, err erro
 		date, err = time.Parse("2006-01-02", cdata["date"].(string))
 	}
 	if err != nil {
-		return Bar{}, err
+		return &Bar{}, err
 	}
-	data := Bar{
+	bar = &Bar{
 		Timestamp: date.Unix(),
 		Open: cdata["open"].(float64),
 		High: cdata["high"].(float64),
@@ -149,7 +141,7 @@ func (cb *CSVBars) convertToBar(cdata map[string]interface{}) (bar Bar, err erro
 		Close: cdata["close"].(float64),
 		Volume: cdata["volume"].(float64),
 	}
-	return data, nil
+	return
 }
 
 

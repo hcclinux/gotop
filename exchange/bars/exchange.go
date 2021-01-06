@@ -85,7 +85,7 @@ func (eb *ExchangeBars) handlePeriodTime(period int) int {
 
 func (eb *ExchangeBars) handleKline() error {
 	period := eb.getPeriod()
-	lastTime := eb.opts.From
+	lastTime := eb.handleTime()
 	for {
 		resp, err := eb.ex.GetKlineRecords(eb.opts.Symbol, period, 1000, int(lastTime.Unix()*1000))
 		if err != nil {
@@ -117,6 +117,7 @@ func (eb *ExchangeBars) handleTime() time.Time {
 	now := time.Now()
 	timestamp := now.Unix() - int64(now.Second()) - int64((60 * now.Minute()))
 	timestamp -= (3600 * 1000)
+	// TODO To be perfected To field logic
 	if !eb.opts.From.IsZero() && eb.opts.To.IsZero() {
 		return eb.opts.From
 	}
