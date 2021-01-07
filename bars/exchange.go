@@ -20,7 +20,6 @@ type ExchangeBars struct {
 func NewExchangeBars(opt ...Option) *ExchangeBars {
 	opts := newOptions(opt...)
 	api := builder.NewAPIBuilder().HttpTimeout(10 * time.Second)
-	// api = apiBuilder.APIKey(ex.apiKey).APISecretkey(ex.secretKey).Build(exName)
 
 	return &ExchangeBars{
 		opts: opts,

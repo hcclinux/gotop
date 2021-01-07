@@ -69,7 +69,7 @@ func (m *MACD) Next(c float64) {
 	m.DEA = append(m.DEA, tmp2)
 	m.MACD = append(m.MACD, macd)
 }
- 
+
 // MA MA指标
 func MA(slice []float64) float64 {
 	if len(slice) == 0 {

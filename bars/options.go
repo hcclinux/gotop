@@ -5,6 +5,7 @@ import (
 
 	"github.com/nntaoli-project/goex"
 )
+
 // Options .
 type Options struct {
 	// Compression For example, TimeFrame = Minute, then Compression = 5 means that the data is 5-minute bar data
@@ -17,8 +18,6 @@ type Options struct {
 	To				time.Time
 	// Symbol currency pair
 	Symbol			goex.CurrencyPair
-	APIKey			string
-	SecretKey		string
 	// For example: "socks5://127.0.0.1:1080"
 	Proxy			string
 	// Previous bar
@@ -27,7 +26,7 @@ type Options struct {
 	ExchangeName 	string
 }
 
-// Option used by the Bars
+// Option used by the ExchangeBars and CSVBars
 type Option func(*Options)
 
 
@@ -49,56 +48,56 @@ func newOptions(options ...Option) Options {
 	return opts
 }
 
-// WithCompression .
+// WithCompression select compression
 func WithCompression(c uint8) Option {
 	return func(o *Options) {
 		o.Compression = c
 	}
 }
 
-// WithTimeFrame .
+// WithTimeFrame select time frame
 func WithTimeFrame(tf uint8) Option {
 	return func(o *Options) {
 		o.TimeFrame = tf
 	}
 }
 
-// WithFrom .
+// WithFrom start time of bar
 func WithFrom(t time.Time) Option {
 	return func(o *Options) {
 		o.From = t
 	}
 }
 
-// WithTo .
+// WithTo end time of bar
 func WithTo(t time.Time) Option {
 	return func(o *Options) {
 		o.To = t
 	}
 }
 
-// WithSymbol .
+// WithSymbol currency pair
 func WithSymbol(s goex.CurrencyPair) Option {
 	return func(o *Options) {
 		o.Symbol = s
 	}
 }
 
-// WithProxy .
+// WithProxy proxy address and port
 func WithProxy(s string) Option {
 	return func(o *Options) {
 		o.Proxy = s
 	}
 }
 
-// WithPath .
+// WithPath file path
 func WithPath(s string) Option {
 	return func(o *Options) {
 		o.Path = s
 	}
 }
 
-// WithName .
+// WithName exchange name
 func WithName(name string) Option {
 	return func(o *Options) {
 		o.ExchangeName = name

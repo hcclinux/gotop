@@ -1,4 +1,4 @@
-package utils
+package bars
 
 import (
 	"sort"
@@ -68,7 +68,7 @@ func HHV(dataset []float64, period int) float64 {
 	default:
 		copy(temp, dataset[len(dataset) - period:])
 	}
-	
+
 	sort.Float64s(temp)
 	return temp[len(temp) - 1]
 }
@@ -88,7 +88,7 @@ func LLV(dataset []float64, period int) float64 {
 	default:
 		copy(temp, dataset[len(dataset) - period:])
 	}
-	
+
 	sort.Float64s(temp)
 	return temp[0]
 }
