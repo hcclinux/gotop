@@ -8,7 +8,7 @@ const (
 	// Error 订单异常
 	Error = 	iota
 	// Canceled 订单取消状态
-	Canceled 		
+	Canceled
 	// Rejected 订单拒绝状态
 	Rejected
 	// Submitted 订单提交状态
@@ -47,7 +47,7 @@ type Order struct {
 	OrderID 			string				`json:"order_id"`
 	ExecPrice			float64				`json:"price"`
 	Type 				string				`json:"type"`
-	Quantity 			float64				`json:"quantity"`	
+	Quantity 			float64				`json:"quantity"`
 	Comm				float64				`json:"comm"`
 	Side 				string				`json:"side"`
 	PositionSide 		string				`json:"position_side"`

@@ -1,4 +1,4 @@
-module gotop
+module github.com/hcclinux/gotop
 
 go 1.15
 
