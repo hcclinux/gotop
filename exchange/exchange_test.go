@@ -9,14 +9,13 @@ import (
 func TestNewExchange(t *testing.T) {
 	ex := NewExchange(
 		WithExchangeName(goex.BINANCE),
-		WithProxy("socks5://127.0.0.1:1080"),
+		WithProxy("socks5://127.0.0.1:7890"),
 		APIKey(""),
 		SecretKey(""),
 	)
-	acc, err := ex.Balance()
-	if err != nil {
-		t.Log(err)
+	if err := ex.Init(); err != nil {
+		t.Error(err)
 		return
 	}
-	t.Log(acc)
+	t.Log(ex.GetBalance())
 }

@@ -10,26 +10,34 @@ import (
 // Exchange .
 type Exchange struct {
 	api 		goex.API
-	proxy 		string
-	secretKey 	string
-	apiKey 		string
-	name 		string
+	opts 		Options
 }
 
 // NewExchange .
 func NewExchange(options ...Option) (ex *Exchange) {
-	ex = &Exchange{}
-
-	for _, o := range options {
-		o(ex)
+	ex = &Exchange{
+		opts: Options{},
 	}
 
-	build := builder.NewAPIBuilder().HttpTimeout(10 * time.Second).HttpProxy(ex.proxy)
-	ex.api = build.APIKey(ex.apiKey).APISecretkey(ex.secretKey).Build(ex.name)
+	for _, o := range options {
+		o(&ex.opts)
+	}
 	return
 }
 
-// Balance .
-func (e *Exchange) Balance() (*goex.Account, error) {
-	return e.api.GetAccount()
+// Init .
+func (ex *Exchange) Init(opts ...Option) error {
+	for _, o := range opts {
+		o(&ex.opts)
+	}
+
+	build := builder.NewAPIBuilder().HttpTimeout(10 * time.Second).HttpProxy(ex.opts.Proxy)
+	ex.api = build.APIKey(ex.opts.APIKey).APISecretkey(ex.opts.SecretKey).Build(ex.opts.Name)
+
+	return nil
+}
+
+// GetBalance .
+func (ex *Exchange) GetBalance() (*goex.Account, error) {
+	return ex.api.GetAccount()
 }
